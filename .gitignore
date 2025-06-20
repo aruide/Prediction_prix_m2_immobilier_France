@@ -193,5 +193,11 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 
-data/*
-#!data/.gitignore
+data/clean/*
+data/raw/*
+models/*
+!data/raw/.gitignore
+!data/clean/.gitignore
+notebooks/comparaison/*
+notebooks/*.json
+
