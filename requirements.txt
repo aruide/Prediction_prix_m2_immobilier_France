@@ -1,0 +1,12 @@
+requests
+python-dotenv
+fastapi
+uvicorn
+pytest
+httpx
+numpy
+pandas
+matplotlib
+seaborn
+scikit-learn
+pyarrow
