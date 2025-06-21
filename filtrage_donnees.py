@@ -1,56 +1,69 @@
 import pandas as pd
 import os
+import argparse
 
-def clean():
-    # Chargement
+def nettoyer_et_exporter(df_ville: pd.DataFrame, nom_ville: str, export_csv=False):
+    colonnes_virgule = ["Valeur fonciere", "Surface reelle bati", "Surface terrain"]
+    for col in colonnes_virgule:
+        df_ville[col] = df_ville[col].astype(str).str.replace(',', '.').astype(float)
+
+    type_mapping = {
+        "Valeur fonciere": "float",
+        "Surface reelle bati": "float",
+        "Nombre pieces principales": "Int64",
+        "Surface terrain": "float",
+        "Commune": "string",
+        "Code postal": "string",
+        "Code type local": "Int64",
+        "Type local": "string",
+        "Nombre de lots": "Int64"
+    }
+
+    df_ville = df_ville.astype(type_mapping)
+
+    # Export
+    nom_fichier_base = f"data/clean/{nom_ville.lower()}_2022"
+    df_ville.to_parquet(f"{nom_fichier_base}.parquet", index=False)
+    if export_csv:
+        df_ville.to_csv(f"{nom_fichier_base}.csv", index=False)
+
+    print(f"✅ Export terminé pour {nom_ville}.")
+
+def clean(export_csv=False):
+    # Lecture brute
     df = pd.read_csv("data/raw/ValeursFoncieres-2022.txt", sep='|', low_memory=False)
 
-    # Harmonisation
-    df['Commune'] = df['Commune'].str.upper()
+    colonnes_a_garder = [
+        "Valeur fonciere",
+        "Surface reelle bati",
+        "Nombre pieces principales",
+        "Surface terrain",
+        "Commune",
+        "Code postal",
+        "Code type local",
+        "Type local",
+        "Nombre de lots"
+    ]
 
-    # Filtrage LILLE
-    df_lille = df[
-        (df['Commune'] == 'LILLE') & 
-        (df['Nature mutation'] == 'Vente') & 
-        (df['Surface reelle bati'].notna()) & 
-        (df['Valeur fonciere'].notna())
-    ].copy()
+    df["Commune"] = df["Commune"].str.upper()
 
-    # Filtrage BORDEAUX
-    df_bordeaux = df[
-        (df['Commune'] == 'BORDEAUX') & 
-        (df['Nature mutation'] == 'Vente') & 
-        (df['Surface reelle bati'].notna()) & 
-        (df['Valeur fonciere'].notna())
-    ].copy()
+    # Préparation dossier
+    os.makedirs("data/clean", exist_ok=True)
 
-    # Conversion en float
-    for df_city in [df_lille, df_bordeaux]:
-        df_city['Valeur fonciere'] = (
-            df_city['Valeur fonciere']
-            .astype(str)
-            .str.replace(',', '.')
-            .str.replace(' ', '')
-            .astype(float)
-        )
-        df_city['Surface reelle bati'] = (
-            df_city['Surface reelle bati']
-            .astype(str)
-            .str.replace(',', '.')
-            .str.replace(' ', '')
-            .astype(float)
-        )
+    for ville in ["LILLE", "BORDEAUX"]:
+        df_ville = df[
+            (df["Commune"] == ville) &
+            (df["Nature mutation"] == "Vente") &
+            (df["Surface reelle bati"].notna()) &
+            (df["Valeur fonciere"].notna()) &
+            (df["Type local"].isin(["Appartement", "Maison"]))
+        ][colonnes_a_garder].copy()
 
-    # Calcul du prix au m²
-    df_lille['prix_m2'] = df_lille['Valeur fonciere'] / df_lille['Surface reelle bati']
-    df_bordeaux['prix_m2'] = df_bordeaux['Valeur fonciere'] / df_bordeaux['Surface reelle bati']
-
-    # Export en .parquet
-    os.makedirs("data", exist_ok=True)
-    df_lille.to_parquet("data/clean/lille_2022.parquet", index=False)
-    df_bordeaux.to_parquet("data/clean/bordeaux_2022.parquet", index=False)
-
-    print("Export Parquet terminé.")
+        nettoyer_et_exporter(df_ville, ville, export_csv=export_csv)
 
 if __name__ == "__main__":
-    clean()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--csv", action="store_true", help="Exporter aussi au format CSV")
+    args = parser.parse_args()
+
+    clean(export_csv=args.csv)
