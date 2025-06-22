@@ -194,4 +194,5 @@ cython_debug/
 .cursorindexingignore
 
 data/*
+models/*
 #!data/.gitignore
