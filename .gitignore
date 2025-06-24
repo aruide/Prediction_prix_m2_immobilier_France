@@ -196,3 +196,5 @@ cython_debug/
 data/*
 models/*
 #!data/.gitignore
+notebooks/comparaison/*
+notebooks/*.json
