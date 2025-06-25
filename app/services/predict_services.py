@@ -7,16 +7,14 @@ liste_logement = {
     "appartement": 2
 }
 
-#features_maison = ["Surface terrain", "Surface reelle bati"]
-#features_appartement = ["Nombre de lots", "Surface reelle bati"]
-#pipeline_maison = joblib.load("../models/pipeline_maison_models.pkl")
+liste_ville = ["Lille","Bordaux"]
 
 class PredictService:
     def verify_ville(self, ville: str) -> bool:
-        return ville.lower().capitalize() in ["Lille","Bordaux"]
+        return ville.lower().capitalize() in liste_ville
     
     def verify_type_local(self, type_local: str) -> bool:
-        return type_local in liste_logement.keys()
+        return type_local.lower() in liste_logement.keys()
     
     def choice_models(self, ville: str, data):
         ville = ville.lower().capitalize()
@@ -36,23 +34,25 @@ class PredictService:
         model = joblib.load(f"app/models/{ville}/models_{type_local}_{ville}.pkl")
         print("ok pour ici")
         prediction = model.predict(df)[0]
+        final_model = list(model.named_steps.values())[-1]
+        model_name = final_model.__class__.__name__
         return {
-                "prix_m2_estime": prediction,
+                "prix_m2_estime": float(prediction),
                 "ville_modele": ville,
-                "model": "test"
-            } # ou prediction.tolist() si tu veux une liste
+                "model": model_name
+            } 
        
     def use_models(self, data, ville = None):
         if type(data) == Predict:
             if(self.verify_type_local(data.features.type_local.lower())):
                 return self.choice_models(data.ville, data.features)
             else:
-                return "type de logement inconnue"
+                return { "message":"type de logement inconnue"}
         elif type(data) == VilleData:
             if(self.verify_type_local(data.type_local.lower())):
                 return self.choice_models(ville, data)
             else:
-                return "type de logement inconnue"
+                return { "message":"type de logement inconnue"}
         else:
             return None
     
