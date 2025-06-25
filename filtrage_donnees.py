@@ -7,6 +7,9 @@ def nettoyer_et_exporter(df_ville: pd.DataFrame, nom_ville: str, export_csv=Fals
     for col in colonnes_virgule:
         df_ville[col] = df_ville[col].astype(str).str.replace(',', '.').astype(float)
 
+    # Calcul du prix au m2 (à refaire ici après conversion)
+    df_ville["prix_m2"] = df_ville["Valeur fonciere"] / df_ville["Surface reelle bati"]
+
     type_mapping = {
         "Valeur fonciere": "float",
         "Surface reelle bati": "float",
@@ -16,7 +19,8 @@ def nettoyer_et_exporter(df_ville: pd.DataFrame, nom_ville: str, export_csv=Fals
         "Code postal": "string",
         "Code type local": "Int64",
         "Type local": "string",
-        "Nombre de lots": "Int64"
+        "Nombre de lots": "Int64",
+        "prix_m2": "float"
     }
 
     df_ville = df_ville.astype(type_mapping)
@@ -43,6 +47,7 @@ def clean(export_csv=False):
         "Code type local",
         "Type local",
         "Nombre de lots"
+        # On n'ajoute PAS encore prix_m2 ici — il sera créé après filtrage
     ]
 
     df["Commune"] = df["Commune"].str.upper()
