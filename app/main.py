@@ -1,12 +1,5 @@
-"""
-Point d'entrée de l'application FastAPI.
-
-Cette application charge des utilisateurs GitHub filtrés à partir d'un fichier JSON
-et expose une API REST pour interroger ces utilisateurs, avec authentification JWT.
-"""
-
 from fastapi import FastAPI
-from .routes.routes import router
+from .routes.predict_routes import router
 from models import *
 import json
 import os
